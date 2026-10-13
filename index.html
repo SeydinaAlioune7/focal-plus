@@ -1132,6 +1132,10 @@ td{padding:10px 12px!important;border-bottom:1px solid #EEF1F6!important}
 tr:hover td,tr.on td{background:#EEF2F8!important}
 .lb text{font-family:"Source Sans 3",system-ui,sans-serif!important}
 .side>*{flex:none!important}.side{display:flex!important;flex-direction:column}
+.side-nav-btn{background:transparent;color:#4B5870;border:0;border-radius:6px;padding:8px 14px;font:600 13px var(--body);cursor:pointer;display:inline-flex;align-items:center;transition:all .15s ease}
+.side-nav-btn:hover{color:#1B2F55;background:rgba(255,255,255,.6)}
+.side-nav-btn.on{background:#fff;color:#1C3961;box-shadow:0 1px 3px rgba(16,24,40,.08);font-weight:700}
+
 .legend{left:12px!important;right:auto!important;top:auto!important;bottom:12px!important;max-width:210px!important;font-size:11.5px!important;padding:7px 10px!important;background:rgba(255,255,255,.92)!important;max-height:calc(100% - 90px);overflow:auto}
 .legend h3{cursor:pointer;display:flex;justify-content:space-between;gap:10px;margin:0!important}
 .legend h3::after{content:"Masquer";font-weight:600;text-transform:none;letter-spacing:0;color:#24406F}
@@ -1174,10 +1178,34 @@ tr:hover td,tr.on td{background:#EEF2F8!important}
     <div id="tip" hidden></div>
   </div>
   <div class="card side">
-    <div><h2 id="tname">…</h2><div class="sub" id="tsub"></div></div>
-    <div class="kpis" id="kpis"></div>
-    <h3 class="t">Communes avec au moins un QPV <span class="sub" style="text-transform:none;letter-spacing:0;font-weight:400">· cliquer une ligne pour zoomer</span></h3>
-    <div class="tbl"><table><thead><tr><th data-s="n">Commune</th><th data-s="s" id="th-ind">Indicateur</th><th class="r" data-s="pp">Pop. en QPV</th><th class="r" data-s="pq">Parc en QPV</th><th class="r" data-s="t">Logts sociaux</th></tr></thead><tbody id="tb"></tbody></table></div>
+    <div class="side-head-bar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;border-bottom:1px solid #E2E5EA;padding-bottom:14px">
+      <div>
+        <h2 id="tname" style="margin:0 0 4px;font:700 24px var(--body);color:#1B2F55">…</h2>
+        <div class="sub" id="tsub" style="font-size:13.5px;color:#6A7385"></div>
+      </div>
+      <!-- Onglets horizontaux deroulants pour gagner de l'espace -->
+      <div class="side-tabs-nav" style="display:inline-flex;gap:4px;background:#F1F4F8;padding:4px;border-radius:8px">
+        <button type="button" class="side-nav-btn on" id="sbtn-kpis" onclick="switchSideView('kpis')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          Synthèse & Indicateurs (KPIs)
+        </button>
+        <button type="button" class="side-nav-btn" id="sbtn-communes" onclick="switchSideView('communes')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Communes avec QPV (Tableau)
+        </button>
+        <button type="button" class="side-nav-btn" id="sbtn-all" onclick="switchSideView('all')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:6px"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          Vue complète
+        </button>
+      </div>
+    </div>
+    <div id="side-view-kpis">
+      <div class="kpis" id="kpis"></div>
+    </div>
+    <div id="side-view-communes" style="display:none">
+      <h3 class="t" style="margin:12px 0 6px;font:700 14px var(--body);color:#1B2F55">Communes avec au moins un QPV <span class="sub" style="text-transform:none;letter-spacing:0;font-weight:400;color:#6A7385">· cliquer une ligne pour zoomer sur la carte</span></h3>
+      <div class="tbl"><table><thead><tr><th data-s="n">Commune</th><th data-s="s" id="th-ind">Indicateur</th><th class="r" data-s="pp">Pop. en QPV</th><th class="r" data-s="pq">Parc en QPV</th><th class="r" data-s="t">Logts sociaux</th></tr></thead><tbody id="tb"></tbody></table></div>
+    </div>
   </div>
 </main>
 <div class="notes">
@@ -1487,7 +1515,22 @@ function DURF(b){if(!b)return {l:'n.d.',c:['#EEF1F5','#8A93A3'],t:'Bailleur abse
   else{var br=sty==='part'?[5,10,20,30,40]:[10,25,40,55,70];var lab=['Moins de '+br[0]+' %'].concat(br.slice(0,4).map(function(b,k){return b+' à '+br[k+1]+' %'})).concat([br[4]+' % ou plus']);
    h='<b style="display:block;margin-bottom:5px">'+(sty==='part'?'Part des habitants vivant en QPV':'Part du parc social situé en QPV')+'</b>'+lab.map(function(l,k){return '<div><i style="background:'+RAMP[k]+'"></i>'+l+'</div>'}).reverse().join('')+'<div><i style="background:#fff;border:1px solid #9AA3B0"></i>Aucun</div><div><i style="background:none;border:1.3px solid #1B2F55"></i>Contour des QPV</div>'}
   lg.innerHTML=h}
- window.__focusDraw=draw;
+ 
+function switchSideView(v){
+  const vk=document.getElementById('side-view-kpis');
+  const vc=document.getElementById('side-view-communes');
+  const bk=document.getElementById('sbtn-kpis');
+  const bc=document.getElementById('sbtn-communes');
+  const ba=document.getElementById('sbtn-all');
+  if(!vk||!vc)return;
+  [bk,bc,ba].forEach(b=>b&&b.classList.remove('on'));
+  if(v==='kpis'){vk.style.display='block';vc.style.display='none';if(bk)bk.classList.add('on')}
+  else if(v==='communes'){vk.style.display='none';vc.style.display='block';if(bc)bc.classList.add('on')}
+  else{vk.style.display='block';vc.style.display='block';if(ba)ba.classList.add('on')}
+}
+window.switchSideView=switchSideView;
+
+window.__focusDraw=draw;
  var _r=render;render=function(t){_r(t);try{draw()}catch(e){console.log(e.stack)}};try{draw()}catch(e){console.log(e.stack)}
  window.__printHTML=function(){var css=[].map.call(document.querySelectorAll('style'),function(s){return s.textContent}).join('\n');return '<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Focus · '+cur.label+'</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&display=swap"><style>'+css+'\nbody{margin:0;background:#fff}#poster .styles{display:none}#poster svg.pmap{height:150mm}#poster .pb{min-height:0}@page{size:A4 landscape;margin:7mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body class="focus">'+P.outerHTML+'</body></html>'};
 })();
